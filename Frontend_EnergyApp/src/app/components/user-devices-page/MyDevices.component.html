@@ -1,0 +1,30 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    <div class="navbar-logo">
+      <h2>Energy System Management</h2>
+    </div>
+
+    <div class="navbar-buttons">
+      <button class="btn" (click)="goToHomePage()">Home</button>
+      <button class="btn" (click)="viewUserDetails()">Profile</button>
+      <button class="btn" (click)="logout()">Logout</button>
+    </div>
+  </div>
+</nav>
+<div class="devices-container" *ngIf="devices.length; else noDevices">
+  <h2 class="text-center"><b>My Devices</b></h2>
+  <ul class="device-list">
+    <li *ngFor="let device of devices" class="device-item">
+      <p><b>Id:</b> {{ device.id }}</p>
+      <p><b>Description:</b>  {{ device.description }}</p>
+      <p><b>Address:</b>  {{ device.address }}</p>
+      <p><b>Maximum hourly consumption:</b>  {{ device.maxHourlyEnergyConsumption }}</p>
+    </li>
+  </ul>
+</div>
+
+<ng-template #noDevices>
+  <div class="no-devices">
+    <p>No devices found.</p>
+  </div>
+</ng-template>

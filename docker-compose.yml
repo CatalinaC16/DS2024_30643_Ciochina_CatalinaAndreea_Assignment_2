@@ -1,0 +1,90 @@
+version: '3'
+
+networks:
+  custom_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.0.0/24
+        
+services:
+  postgres-user:
+    image: postgres:16-alpine3.18
+    container_name: postgres-user
+    networks:
+      custom_network:
+        ipv4_address: 172.16.0.2
+    environment:
+      POSTGRES_DB: user_ms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cata1609
+    expose:
+      - 5432
+      
+  user-management-app:
+    build: ./UserMicroService
+    image: users:latest
+    container_name: users
+    networks:
+      custom_network:
+        ipv4_address: 172.16.0.3
+    environment:
+      DB_IP: 172.16.0.2
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: cata1609
+      DB_DBNAME: user_ms
+      DEVICE_CONTAINER_NAME: 172.16.0.5
+      DEVICE_CONTAINER_PORT: 8081
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres-user
+
+
+  postgres-device:
+    image: postgres:16-alpine3.18
+    container_name: postgres-device
+    networks:
+      custom_network:
+        ipv4_address: 172.16.0.4
+    environment:
+      POSTGRES_DB: device_ms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cata1609
+    expose:
+      - 5432
+
+  device-management-app:
+    build: ./DeviceMicroService
+    image: devices:latest
+    container_name: devices
+    networks:
+      custom_network:
+        ipv4_address: 172.16.0.5
+    environment:
+      DB_IP: 172.16.0.4
+      DB_PORT: 5432  
+      DB_USER: postgres
+      DB_PASSWORD: cata1609
+      DB_DBNAME: device_ms
+      USER_CONTAINER_NAME: 172.16.0.3
+      USER_CONTAINER_PORT: 8080
+    ports:
+      - "8081:8081" 
+    depends_on:
+      - postgres-device
+
+
+  frontend:
+    build: ./Frontend_EnergyApp
+    container_name: client
+    image: client:latest
+    environment:
+      NG_APP_HOST_USER_API: http://172.16.0.3:8080
+      NG_APP_HOST_DEVICE_API: http://172.16.0.5:8081
+    ports:
+      - "4200:4200"
+    depends_on:
+      - user-management-app
+      - device-management-app
