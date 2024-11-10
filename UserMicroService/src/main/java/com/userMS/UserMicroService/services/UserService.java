@@ -79,11 +79,11 @@ public class UserService {
             throw new UserDoesNotExistException("The requested user does not exist");
         }
         User user = userOptional.get();
-        this.userRepository.delete(user);
         logger.info("User with id={} was deleted", id);
         String jwtToken = jwtService.generateToken(user);
         ResponseEntity<String> response = this.syncService.deleteUserInDevicesMS(user.getId(), jwtToken);
-        logger.info("User {} was added in the device MS also", response.getBody());
+        logger.info("{}", response.getBody());
+        this.userRepository.delete(user);
         return "User with id= " + id + " was deleted successfully!";
     }
 
