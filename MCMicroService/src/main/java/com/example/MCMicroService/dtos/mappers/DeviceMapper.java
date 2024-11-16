@@ -28,6 +28,7 @@ public class DeviceMapper implements Mapper<Device, DeviceDTO> {
     public Device convertToEntity(DeviceDTO deviceDTO) {
         if (deviceDTO != null) {
             return Device.builder()
+                    .id(deviceDTO.getId())
                     .maxHourlyEnergyConsumption(deviceDTO.getMaxHourlyEnergyConsumption())
                     .user_id(deviceDTO.getUser_id())
                     .build();
