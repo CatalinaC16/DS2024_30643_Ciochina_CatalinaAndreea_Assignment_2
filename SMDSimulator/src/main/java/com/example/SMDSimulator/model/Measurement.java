@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Measurement {
     private String deviceId;
-    private double value;
+    private double measure;
     private long timestamp;
 }
