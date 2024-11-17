@@ -1,6 +1,6 @@
 package com.example.SMDSimulator.processor;
 
-import com.example.SMDSimulator.rabbitMQ.MessageProducer;
+import com.example.SMDSimulator.producer.MessageProducer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Service;

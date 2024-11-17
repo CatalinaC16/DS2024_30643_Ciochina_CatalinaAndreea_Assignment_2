@@ -1,4 +1,4 @@
-package com.example.MCMicroService.dtos.deviceDTOs;
+package com.example.deviceMS.dtos.deviceDTOs;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,8 +11,9 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DeviceDTO {
+public class DeviceMessageDTO {
     private UUID id;
+    private String action;
     private int maxHourlyEnergyConsumption;
     private UUID user_id;
 }

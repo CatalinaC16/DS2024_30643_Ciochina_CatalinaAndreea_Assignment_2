@@ -7,6 +7,7 @@ import com.example.deviceMS.entities.User;
 import com.example.deviceMS.exceptions.DeviceDoesNotExistException;
 import com.example.deviceMS.exceptions.InvalidDataException;
 import com.example.deviceMS.exceptions.UserDoesNotExistException;
+import com.example.deviceMS.producer.DeviceProducer;
 import com.example.deviceMS.repositories.DeviceRepository;
 import com.example.deviceMS.repositories.UserRepository;
 import jakarta.transaction.Transactional;
@@ -30,6 +31,8 @@ public class DeviceService {
     private final UserRepository userRepository;
 
     private final DeviceMapper deviceMapper;
+
+    private final DeviceProducer deviceProducer;
 
     private static final Logger logger = LoggerFactory.getLogger(DeviceService.class);
 
@@ -75,6 +78,7 @@ public class DeviceService {
         }
         Device device = deviceOptional.get();
         this.deviceRepository.delete(device);
+        deviceProducer.sendDeviceMessage(device, "delete");
         logger.info("Device with id={} was deleted", id);
         return "Device with id= " + id + " was deleted successfully!";
     }
@@ -83,6 +87,7 @@ public class DeviceService {
         Device device = this.deviceMapper.convertToEntity(deviceDTO);
         device = this.deviceRepository.save(device);
         logger.info("The device was created");
+        deviceProducer.sendDeviceMessage(device, "insert");
         return this.deviceMapper.convertToDTO(device);
     }
 
@@ -96,6 +101,7 @@ public class DeviceService {
         Device device = deviceOptional.get();
         device = this.updateDeviceValues(device, deviceDTO);
         this.deviceRepository.save(device);
+        deviceProducer.sendDeviceMessage(device, "update");
         logger.info("The device with id={} was updated", id);
         return this.deviceMapper.convertToDTO(device);
     }

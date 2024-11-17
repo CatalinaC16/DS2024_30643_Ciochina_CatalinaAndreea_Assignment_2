@@ -1,4 +1,4 @@
-package com.example.SMDSimulator.rabbitMQ;
+package com.example.SMDSimulator.producer;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
