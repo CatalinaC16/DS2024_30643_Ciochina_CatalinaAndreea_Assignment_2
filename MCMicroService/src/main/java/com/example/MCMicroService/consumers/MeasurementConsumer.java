@@ -51,7 +51,7 @@ public class MeasurementConsumer {
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
                 System.out.println(" [x] Received: " + message);
-                processMessage(message);
+                parseMeasurement(message);
             };
 
             channel.basicConsume(QUEUE_NAME, true, deliverCallback, consumerTag -> {
@@ -63,7 +63,7 @@ public class MeasurementConsumer {
         }
     }
 
-    private void processMessage(String message) {
+    private void parseMeasurement(String message) {
         try {
             JsonNode jsonNode = objectMapper.readTree(message);
 
