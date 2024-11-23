@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface MeasurementRepository extends JpaRepository<Measurement, UUID> {
 
+    List<Measurement> findAllByDeviceId(UUID id);
 }

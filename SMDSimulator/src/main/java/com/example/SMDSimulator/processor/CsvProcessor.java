@@ -17,7 +17,7 @@ public class CsvProcessor {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final long timeIncrement = 60000;//0
+    private static final long timeIncrement = 60000;//0 -> pe 1 minut acum
 
     public void readAndSendData(String deviceId) {
         try (InputStream inputStream = getClass().getResourceAsStream("/sensor.csv");

@@ -6,6 +6,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 @SpringBootApplication
 public class SmdSimulatorApplication implements CommandLineRunner {
 
@@ -18,12 +22,31 @@ public class SmdSimulatorApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		if (args.length < 1) {
-			System.out.println("Usage: java -jar SmdSimulatorApplication.jar <device_id>");
-			System.exit(1);
+		String deviceId;
+
+		if (args.length >= 1) {
+			deviceId = args[0];
+		} else {
+			deviceId = getDeviceIdFromConfig();
+			if (deviceId == null) {
+				System.out.println("Device ID not provided and not found in configuration file.");
+				System.out.println("Usage: java -jar SmdSimulatorApplication.jar <device_id>");
+				System.exit(1);
+			}
 		}
 
-		String deviceId = args[0];
 		deviceSimulatorService.startSimulation(deviceId);
+	}
+
+	private String getDeviceIdFromConfig() {
+		Properties properties = new Properties();
+		try (FileInputStream input = new FileInputStream("config.properties")) {
+			properties.load(input);
+			return properties.getProperty("device.id");
+		} catch (IOException e) {
+			System.err.println("Error reading configuration file: " + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
 	}
 }
