@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { BehaviorSubject } from 'rxjs';
+import { SocketMessageDto } from '../dtos/SocketMessageDto';
 
 @Injectable({
   providedIn: 'root',
@@ -9,7 +10,7 @@ export class WebSocketService {
   private wsUrl = 'ws://localhost:8082/ws';
   private socket$: WebSocketSubject<string> | null = null;
 
-  private alertsSubject = new BehaviorSubject<string[]>([]);
+  public alertsSubject = new BehaviorSubject<SocketMessageDto[]>([]);
   public alerts$ = this.alertsSubject.asObservable();
 
   connect() {
@@ -17,9 +18,14 @@ export class WebSocketService {
       this.socket$ = webSocket(this.wsUrl);
 
       this.socket$.subscribe(
-        (message: string) => {
-          console.log('Received message:', message);
-          this.addAlert(message); // Nu mai încerca să faci parse la JSON
+        (message) => {
+          try {
+            const parsedMessage: string = JSON.stringify(message);
+            let alert = JSON.parse(parsedMessage)
+            this.addAlert(alert);
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+          }
         },
         (error) => {
           console.error('WebSocket error:', error);
@@ -31,7 +37,7 @@ export class WebSocketService {
     }
   }
 
-  private addAlert(alert: string) {
+  private addAlert(alert: SocketMessageDto) {
     const currentAlerts = this.alertsSubject.getValue();
     this.alertsSubject.next([...currentAlerts, alert]);
   }

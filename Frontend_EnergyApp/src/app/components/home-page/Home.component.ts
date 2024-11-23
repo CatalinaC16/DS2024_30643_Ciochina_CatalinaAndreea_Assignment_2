@@ -1,40 +1,28 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {AuthService} from "../../services/Auth.service";
 import {Router} from "@angular/router";
 import {UserDto} from "../../dtos/UserDto";
 import {UserService} from "../../services/User.service";
 import {Role} from "../../dtos/Role";
-import {WebSocketService} from "../../services/Web-Soket.service";
 
 @Component({
   selector: 'app-home',
   templateUrl: './Home.component.html',
   styleUrls: ['./Home.component.css']
 })
-export class HomeComponent implements OnInit, OnDestroy{
+export class HomeComponent implements OnInit {
 
   userEmail: string = '';
   errorMessage: string = '';
   role!: Role;
-  alerts: string[] = [];
 
   constructor(private authService: AuthService,
               private userService: UserService,
-              private router: Router,
-              private webSocketService: WebSocketService) {
+              private router: Router) {
   }
 
   ngOnInit(): void {
     this.loadUser();
-    this.webSocketService.connect();
-
-    this.webSocketService.alerts$.subscribe((alerts) => {
-      this.alerts = alerts;
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.webSocketService.disconnect();
   }
 
   loadUser() {

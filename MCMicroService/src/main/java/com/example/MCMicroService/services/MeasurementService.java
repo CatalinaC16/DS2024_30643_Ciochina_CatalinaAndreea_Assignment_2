@@ -83,7 +83,7 @@ public class MeasurementService {
 
         if (averageConsumption > targetDevice.getMaxHourlyEnergyConsumption()) {
             System.out.println("** Warning: The average consumption for the hour (" + averageConsumption + ") exceeds the maximum limit (" + targetDevice.getMaxHourlyEnergyConsumption() + ").**");
-            this.webSocketSender.sendAlert(deviceId.toString(), averageConsumption, targetDevice.getMaxHourlyEnergyConsumption());
+            this.webSocketSender.sendAlert(deviceId.toString(), averageConsumption, targetDevice.getMaxHourlyEnergyConsumption(), targetDevice.getUser_id().toString());
         } else {
             System.out.println("** The average consumption for the hour is within limits. **");
         }

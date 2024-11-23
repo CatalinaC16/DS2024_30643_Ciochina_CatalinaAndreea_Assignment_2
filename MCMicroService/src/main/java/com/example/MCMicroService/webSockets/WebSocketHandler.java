@@ -31,12 +31,11 @@ public class WebSocketHandler extends TextWebSocketHandler {
         System.out.println("WebSocket connection closed: " + session.getId());
     }
 
-    public void sendMessageToAll(String message) {
-        System.out.println(sessions);
+    public void sendMessageToAll(String message, String userId) {
         for (WebSocketSession session : sessions) {
             try {
                 if (session.isOpen()) {
-                    Message alertMessage = new Message("Alert", message);
+                    Message alertMessage = new Message("Alert", message, userId);
                     String jsonMessage = objectMapper.writeValueAsString(alertMessage);
                     session.sendMessage(new TextMessage(jsonMessage));
                 }
