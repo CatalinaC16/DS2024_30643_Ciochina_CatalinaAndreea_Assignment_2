@@ -3,13 +3,14 @@ import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {AuthService} from "./Auth.service";
 import {DeviceDto} from "../dtos/DeviceDto";
+import {EnergyConsumptionDTO} from "../dtos/EnergyConsumptionDto";
 
 @Injectable({
   providedIn: 'root'
 })
 export class DeviceService {
   private urlAPI = 'http://localhost:8081/api/device';
-  private urlMonitoringAPI = '';
+  private urlMonitoringAPI = 'http://localhost:8082/api/mcm/device';
 
   constructor(private http: HttpClient,
               private authService: AuthService) {
@@ -45,12 +46,17 @@ export class DeviceService {
     });
   }
 
+  getEnergyConsumption(deviceId: string, date: string): Observable<EnergyConsumptionDTO> {
+    const url = `${this.urlMonitoringAPI}/${deviceId}/consumption?date=${date}`;
+    const headers = this.getHeaders();
+    return this.http.get<EnergyConsumptionDTO>(url, {
+      headers: headers,
+      responseType: 'json'
+    });
+  }
+
   private getHeaders(): HttpHeaders {
     const token = this.authService.getToken();
     return new HttpHeaders({'Authorization': `Bearer ${token}`});
-  }
-
-  getEnergyConsumption(deviceId: string, date: string): Observable<{ hours: string[], values: number[] }> {
-    return this.http.get<{ hours: string[], values: number[] }>(`${this.urlMonitoringAPI}/${deviceId}/consumption?date=${date}`);
   }
 }

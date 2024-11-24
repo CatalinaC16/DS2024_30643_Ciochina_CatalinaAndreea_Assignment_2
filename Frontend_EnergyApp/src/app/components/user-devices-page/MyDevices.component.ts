@@ -7,6 +7,7 @@ import { Role } from "../../dtos/Role";
 import { DeviceDto } from "../../dtos/DeviceDto";
 import { DeviceService } from "../../services/Device.service";
 import { ChartData, ChartOptions, ChartType } from "chart.js";
+import {EnergyConsumptionDTO} from "../../dtos/EnergyConsumptionDto";
 
 @Component({
   selector: 'app-my-devices',
@@ -77,9 +78,17 @@ export class MyDevicesComponent implements OnInit {
       return;
     }
 
-    const formattedDate = date.toISOString().split('T')[0];
+    const localDate = new Date(date);
+    const formattedDate = `${localDate.getFullYear()}-${(localDate.getMonth() + 1).toString().padStart(2, '0')}-${localDate.getDate().toString().padStart(2, '0')}`;
+    console.log(formattedDate)
+
     this.deviceService.getEnergyConsumption(deviceId, formattedDate).subscribe(
-      (data) => {
+      (data:EnergyConsumptionDTO) => {
+        console.log(data)
+        const parsedMessage: string = JSON.stringify(data);
+        let valsDate = JSON.parse(parsedMessage);
+        console.log(valsDate.hours);
+
         this.deviceCharts[deviceId] = this.buildChart(data.hours, data.values);
       },
       (error) => {
@@ -89,6 +98,8 @@ export class MyDevicesComponent implements OnInit {
   }
 
   buildChart(labels: string[], data: number[]): { type: ChartType, data: ChartData<ChartType>, options: ChartOptions } {
+    console.log('Labels:', labels);
+    console.log('Data:', data);
     return {
       type: 'line',
       data: {

@@ -14,11 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,11 +48,11 @@ public class MeasurementService {
         System.out.println("Measurement saved: " + measurement);
     }
 
-    public void checkHourlyConsumption(UUID deviceId, long timestamp) {
+    public double checkHourlyConsumption(UUID deviceId, long timestamp, boolean check) {
         Optional<Device> optionalDevice = this.deviceRepository.findById(deviceId);
         if (optionalDevice.isEmpty()) {
-            System.out.println("** Device not found for ID: " + deviceId +" **");
-            return;
+            System.out.println("** Device not found for ID: " + deviceId + " **");
+            return 0;
         }
         Device targetDevice = optionalDevice.get();
 
@@ -73,7 +72,7 @@ public class MeasurementService {
 
         if (measurementsForTargetHour.isEmpty()) {
             System.out.println("** No measurements for the target hour. **");
-            return;
+            return 0;
         }
 
         double averageConsumption = measurementsForTargetHour.stream()
@@ -83,9 +82,35 @@ public class MeasurementService {
 
         if (averageConsumption > targetDevice.getMaxHourlyEnergyConsumption()) {
             System.out.println("** Warning: The average consumption for the hour (" + averageConsumption + ") exceeds the maximum limit (" + targetDevice.getMaxHourlyEnergyConsumption() + ").**");
-            this.webSocketSender.sendAlert(deviceId.toString(), averageConsumption, targetDevice.getMaxHourlyEnergyConsumption(), targetDevice.getUser_id().toString());
+            if (check)
+                this.webSocketSender.sendAlert(deviceId.toString(), averageConsumption, targetDevice.getMaxHourlyEnergyConsumption(), targetDevice.getUser_id().toString());
         } else {
             System.out.println("** The average consumption for the hour is within limits. **");
         }
+        return averageConsumption;
     }
+
+    public Map<String, Double> getDailyConsumption(UUID deviceId, LocalDate date) {
+        Map<String, Double> hourlyConsumption = new LinkedHashMap<>();
+
+        for (int hour = 0; hour < 24; hour++) {
+            // Start of the hour in LocalDateTime (ignoring minutes, seconds, and nano seconds)
+            LocalDateTime hourStart = date.atStartOfDay().plusHours(hour);
+
+            // Convert to UTC timestamp in milliseconds
+            long timestampStartOfHour = hourStart.toInstant(ZoneOffset.UTC).toEpochMilli();
+            long timestampEndOfHour = hourStart.plusHours(1).toInstant(ZoneOffset.UTC).toEpochMilli();
+
+            System.out.println(timestampStartOfHour);
+            // Use the timestamp range to fetch all measurements within that hour
+            double hourlyMeasure = this.checkHourlyConsumption(deviceId, timestampEndOfHour, false);
+
+            String hourLabel = String.format("%02d:00", hour);
+            hourlyConsumption.put(hourLabel, hourlyMeasure);
+        }
+
+        return hourlyConsumption;
+    }
+
+
 }

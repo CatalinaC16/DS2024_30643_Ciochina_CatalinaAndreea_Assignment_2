@@ -63,7 +63,7 @@ public class MeasurementConsumer {
         }
     }
 
-     private void parseMeasurement(String message) {
+    private void parseMeasurement(String message) {
         try {
             JsonNode jsonNode = objectMapper.readTree(message);
 
@@ -77,7 +77,7 @@ public class MeasurementConsumer {
             measurementDTO.setDevice_id(deviceId);
 
             measurementService.createMeasurement(measurementDTO);
-            measurementService.checkHourlyConsumption(deviceId, timestamp);
+            measurementService.checkHourlyConsumption(deviceId, timestamp, true);
         } catch (Exception e) {
             System.err.println("Failed to process message: " + e.getMessage());
             e.printStackTrace();
