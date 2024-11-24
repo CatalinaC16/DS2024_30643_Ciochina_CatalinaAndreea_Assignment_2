@@ -100,7 +100,7 @@ public class MeasurementService {
 
             double hourlyMeasure = this.checkHourlyConsumption(deviceId, timestampStartOfHour, false);
 
-            System.out.println("Time "+timestampStartOfHour+ " Measure: "+hourlyMeasure);
+            //System.out.println("Time "+timestampStartOfHour+ " Measure: "+hourlyMeasure);
 
             String hourLabel = String.format("%02d:00", hour+2);
             hourlyConsumption.put(hourLabel, hourlyMeasure);

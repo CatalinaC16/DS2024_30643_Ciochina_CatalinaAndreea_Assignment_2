@@ -1,12 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { AuthService } from "../../services/Auth.service";
-import { Router } from "@angular/router";
-import { UserDto } from "../../dtos/UserDto";
-import { UserService } from "../../services/User.service";
-import { Role } from "../../dtos/Role";
-import { DeviceDto } from "../../dtos/DeviceDto";
-import { DeviceService } from "../../services/Device.service";
-import { ChartData, ChartOptions, ChartType } from "chart.js";
+import {Component, OnInit} from '@angular/core';
+import {AuthService} from "../../services/Auth.service";
+import {Router} from "@angular/router";
+import {UserDto} from "../../dtos/UserDto";
+import {UserService} from "../../services/User.service";
+import {Role} from "../../dtos/Role";
+import {DeviceDto} from "../../dtos/DeviceDto";
+import {DeviceService} from "../../services/Device.service";
+import {ChartData, ChartOptions, ChartType} from "chart.js";
 import {EnergyConsumptionDTO} from "../../dtos/EnergyConsumptionDto";
 
 @Component({
@@ -27,7 +27,8 @@ export class MyDevicesComponent implements OnInit {
     private userService: UserService,
     private router: Router,
     private authService: AuthService
-  ) {}
+  ) {
+  }
 
   ngOnInit(): void {
     const token = this.authService.getToken();
@@ -83,14 +84,23 @@ export class MyDevicesComponent implements OnInit {
     console.log(formattedDate)
 
     this.deviceService.getEnergyConsumption(deviceId, formattedDate).subscribe(
-      (data:EnergyConsumptionDTO) => {
+      (data: EnergyConsumptionDTO) => {
         console.log(data)
-        this.deviceCharts[deviceId] = this.buildChart(data.hours, data.values);
+        const adjustedLabels = this.adjustLabelsToUTC(data.hours);
+        this.deviceCharts[deviceId] = this.buildChart(adjustedLabels, data.values);
       },
       (error) => {
         console.error('Failed to fetch energy consumption data', error);
       }
     );
+  }
+
+  adjustLabelsToUTC(labels: string[]): string[] {
+    return labels.map(label => {
+      let hour = parseInt(label.split(':')[0], 10);
+      hour = (hour - 2 + 24) % 24;
+      return `${hour.toString().padStart(2, '0')}:00`;
+    });
   }
 
   buildChart(labels: string[], data: number[]): { type: ChartType, data: ChartData<ChartType>, options: ChartOptions } {
@@ -112,8 +122,8 @@ export class MyDevicesComponent implements OnInit {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { title: { display: true, text: 'Hour' } },
-          y: { title: { display: true, text: 'Energy Consumption (kWh)' } }
+          x: {title: {display: true, text: 'Hour'}},
+          y: {title: {display: true, text: 'Energy Consumption (kWh)'}}
         }
       }
     };

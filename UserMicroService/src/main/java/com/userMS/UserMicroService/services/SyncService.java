@@ -17,8 +17,9 @@ public class SyncService {
 
     private final RestTemplate restTemplate;
 
-   // private final String deviceMicroserviceUrl = "http://172.16.0.5:8081/api/user";
-    private final String deviceMicroserviceUrl = "http://localhost:8081/api/user";
+    private final String deviceMicroserviceUrl = "http://172.16.0.5:8081/api/user";
+
+    //private final String deviceMicroserviceUrl = "http://localhost:8081/api/user";
 
     private static final Logger logger = LoggerFactory.getLogger(SyncService.class);
 
