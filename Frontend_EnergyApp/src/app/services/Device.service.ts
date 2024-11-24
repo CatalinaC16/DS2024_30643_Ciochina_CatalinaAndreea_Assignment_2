@@ -9,6 +9,7 @@ import {DeviceDto} from "../dtos/DeviceDto";
 })
 export class DeviceService {
   private urlAPI = 'http://localhost:8081/api/device';
+  private urlMonitoringAPI = '';
 
   constructor(private http: HttpClient,
               private authService: AuthService) {
@@ -21,18 +22,18 @@ export class DeviceService {
 
   getAllDevices(): Observable<DeviceDto[]> {
     const headers = this.getHeaders();
-    return this.http.get<DeviceDto[]>(`${this.urlAPI}/getAll`,{headers});
+    return this.http.get<DeviceDto[]>(`${this.urlAPI}/getAll`, {headers});
   }
 
 
   createDevice(deviceDto: DeviceDto): Observable<DeviceDto> {
     const headers = this.getHeaders();
-    return this.http.post<DeviceDto>(`${this.urlAPI}/create`, deviceDto,{headers});
+    return this.http.post<DeviceDto>(`${this.urlAPI}/create`, deviceDto, {headers});
   }
 
   updateDevice(deviceId: string, deviceDto: DeviceDto): Observable<DeviceDto> {
     const headers = this.getHeaders();
-    return this.http.put<DeviceDto>(`${this.urlAPI}/update/${deviceId}`, deviceDto,{headers});
+    return this.http.put<DeviceDto>(`${this.urlAPI}/update/${deviceId}`, deviceDto, {headers});
   }
 
   deleteDevice(deviceId: string): Observable<string> {
@@ -47,5 +48,9 @@ export class DeviceService {
   private getHeaders(): HttpHeaders {
     const token = this.authService.getToken();
     return new HttpHeaders({'Authorization': `Bearer ${token}`});
+  }
+
+  getEnergyConsumption(deviceId: string, date: string): Observable<{ hours: string[], values: number[] }> {
+    return this.http.get<{ hours: string[], values: number[] }>(`${this.urlMonitoringAPI}/${deviceId}/consumption?date=${date}`);
   }
 }

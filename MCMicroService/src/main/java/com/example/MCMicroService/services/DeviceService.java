@@ -3,13 +3,16 @@ package com.example.MCMicroService.services;
 import com.example.MCMicroService.dtos.deviceDTOs.DeviceDTO;
 import com.example.MCMicroService.dtos.mappers.DeviceMapper;
 import com.example.MCMicroService.entities.Device;
+import com.example.MCMicroService.entities.Measurement;
 import com.example.MCMicroService.exceptions.DeviceDoesNotExistException;
 import com.example.MCMicroService.exceptions.InvalidDataException;
 import com.example.MCMicroService.repositories.DeviceRepository;
+import com.example.MCMicroService.repositories.MeasurementRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,6 +23,8 @@ public class DeviceService {
     private final DeviceMapper deviceMapper;
 
     private final DeviceRepository deviceRepository;
+
+    private final MeasurementRepository measurementRepository;
 
     public DeviceDTO createDevice(DeviceDTO deviceDTO) {
         Device device = this.deviceMapper.convertToEntity(deviceDTO);
@@ -43,10 +48,8 @@ public class DeviceService {
 
         if (deviceDTO.getMaxHourlyEnergyConsumption() < 0) {
             throw new InvalidDataException("Max hourly energy consumption must be greater than 0");
-        }
-        else if (deviceDTO.getMaxHourlyEnergyConsumption() == 0) {
-        }
-        else {
+        } else if (deviceDTO.getMaxHourlyEnergyConsumption() == 0) {
+        } else {
             existingDevice.setMaxHourlyEnergyConsumption(deviceDTO.getMaxHourlyEnergyConsumption());
         }
         if (deviceDTO.getUser_id() != null) {
@@ -62,6 +65,11 @@ public class DeviceService {
             throw new DeviceDoesNotExistException("The requested device does not exist");
         }
         Device device = deviceOptional.get();
+
+        List<Measurement> measurementList = this.measurementRepository.findAllByDeviceId(id);
+        if (!measurementList.isEmpty()) {
+            this.measurementRepository.deleteAll(measurementList);
+        }
         this.deviceRepository.delete(device);
         return "Device with id= " + id + " was deleted successfully!";
     }

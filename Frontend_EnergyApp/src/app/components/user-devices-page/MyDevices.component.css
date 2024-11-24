@@ -43,9 +43,9 @@
 }
 
 .devices-container {
-  max-width: 500px;
+  max-width: 1000px;
   margin-top: 4rem;
-  margin-left: 30%;
+  margin-left: 10%;
   width: 100%;
   padding: 40px;
   background-color: rgba(255, 255, 255, 0.3);
@@ -76,4 +76,25 @@ h2 {
   text-align: center;
   color: #283856;
   font-size: 1.2rem;
+}
+
+.device-actions {
+  margin-top: 10px;
+}
+
+.chart-container {
+  margin-top: 20px;
+  width: 100%;
+  max-width: 600px;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.consumption {
+  height: 3.5rem;
+  margin-left: 1.5rem;
 }

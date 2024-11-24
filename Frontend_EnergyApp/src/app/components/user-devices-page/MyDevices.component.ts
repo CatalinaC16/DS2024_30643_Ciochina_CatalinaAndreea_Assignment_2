@@ -1,11 +1,12 @@
-import {Component, OnInit} from '@angular/core';
-import {AuthService} from "../../services/Auth.service";
-import {Router} from "@angular/router";
-import {UserDto} from "../../dtos/UserDto";
-import {UserService} from "../../services/User.service";
-import {Role} from "../../dtos/Role";
-import {DeviceDto} from "../../dtos/DeviceDto";
-import {DeviceService} from "../../services/Device.service";
+import { Component, OnInit } from '@angular/core';
+import { AuthService } from "../../services/Auth.service";
+import { Router } from "@angular/router";
+import { UserDto } from "../../dtos/UserDto";
+import { UserService } from "../../services/User.service";
+import { Role } from "../../dtos/Role";
+import { DeviceDto } from "../../dtos/DeviceDto";
+import { DeviceService } from "../../services/Device.service";
+import { ChartData, ChartOptions, ChartType } from "chart.js";
 
 @Component({
   selector: 'app-my-devices',
@@ -17,12 +18,15 @@ export class MyDevicesComponent implements OnInit {
   errorMessage = '';
   id = '';
   role!: Role;
+  selectedDate: Date | null = null;
+  deviceCharts: { [deviceId: string]: { type: ChartType; data: ChartData<ChartType>; options: ChartOptions } } = {};
 
-  constructor(private deviceService: DeviceService,
-              private userService: UserService,
-              private router: Router,
-              private authService: AuthService) {
-  }
+  constructor(
+    private deviceService: DeviceService,
+    private userService: UserService,
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     const token = this.authService.getToken();
@@ -34,7 +38,7 @@ export class MyDevicesComponent implements OnInit {
         (response: UserDto) => {
           this.id = response.id;
           this.role = response.role;
-          if (this.id != '') {
+          if (this.id !== '') {
             this.deviceService.getDevicesByUserId(this.id).subscribe(
               (data) => {
                 this.devices = data;
@@ -65,5 +69,46 @@ export class MyDevicesComponent implements OnInit {
 
   goToHomePage() {
     this.router.navigate(["/home"]).then();
+  }
+
+  viewConsumption(deviceId: string, date: Date | null): void {
+    if (!date) {
+      alert('Please select a date.');
+      return;
+    }
+
+    const formattedDate = date.toISOString().split('T')[0];
+    this.deviceService.getEnergyConsumption(deviceId, formattedDate).subscribe(
+      (data) => {
+        this.deviceCharts[deviceId] = this.buildChart(data.hours, data.values);
+      },
+      (error) => {
+        console.error('Failed to fetch energy consumption data', error);
+      }
+    );
+  }
+
+  buildChart(labels: string[], data: number[]): { type: ChartType, data: ChartData<ChartType>, options: ChartOptions } {
+    return {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Energy Consumption (kWh)',
+          data: data,
+          borderColor: 'blue',
+          backgroundColor: 'rgba(0, 123, 255, 0.5)',
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { title: { display: true, text: 'Hour' } },
+          y: { title: { display: true, text: 'Energy Consumption (kWh)' } }
+        }
+      }
+    };
   }
 }
