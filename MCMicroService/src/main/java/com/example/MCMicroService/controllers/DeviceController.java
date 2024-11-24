@@ -17,9 +17,7 @@ public class DeviceController {
 
     @GetMapping("/{deviceId}/consumption")
     public ResponseEntity<Map<String, Object>> getEnergyConsumption(@PathVariable UUID deviceId, @RequestParam String date) {
-        System.out.println(date);
         LocalDate selectedDate = LocalDate.parse(date);
-        System.out.println(selectedDate);
         Map<String, Double> hourlyConsumption = measurementService.getDailyConsumption(deviceId, selectedDate);
 
         List<String> hours = new ArrayList<>(hourlyConsumption.keySet());

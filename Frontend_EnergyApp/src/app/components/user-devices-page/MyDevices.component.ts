@@ -85,10 +85,6 @@ export class MyDevicesComponent implements OnInit {
     this.deviceService.getEnergyConsumption(deviceId, formattedDate).subscribe(
       (data:EnergyConsumptionDTO) => {
         console.log(data)
-        const parsedMessage: string = JSON.stringify(data);
-        let valsDate = JSON.parse(parsedMessage);
-        console.log(valsDate.hours);
-
         this.deviceCharts[deviceId] = this.buildChart(data.hours, data.values);
       },
       (error) => {

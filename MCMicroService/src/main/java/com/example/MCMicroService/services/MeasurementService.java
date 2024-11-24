@@ -94,23 +94,17 @@ public class MeasurementService {
         Map<String, Double> hourlyConsumption = new LinkedHashMap<>();
 
         for (int hour = 0; hour < 24; hour++) {
-            // Start of the hour in LocalDateTime (ignoring minutes, seconds, and nano seconds)
             LocalDateTime hourStart = date.atStartOfDay().plusHours(hour);
 
-            // Convert to UTC timestamp in milliseconds
             long timestampStartOfHour = hourStart.toInstant(ZoneOffset.UTC).toEpochMilli();
-            long timestampEndOfHour = hourStart.plusHours(1).toInstant(ZoneOffset.UTC).toEpochMilli();
 
-            System.out.println(timestampStartOfHour);
-            // Use the timestamp range to fetch all measurements within that hour
-            double hourlyMeasure = this.checkHourlyConsumption(deviceId, timestampEndOfHour, false);
+            double hourlyMeasure = this.checkHourlyConsumption(deviceId, timestampStartOfHour, false);
 
-            String hourLabel = String.format("%02d:00", hour);
+            System.out.println("Time "+timestampStartOfHour+ " Measure: "+hourlyMeasure);
+
+            String hourLabel = String.format("%02d:00", hour+2);
             hourlyConsumption.put(hourLabel, hourlyMeasure);
         }
-
         return hourlyConsumption;
     }
-
-
 }
