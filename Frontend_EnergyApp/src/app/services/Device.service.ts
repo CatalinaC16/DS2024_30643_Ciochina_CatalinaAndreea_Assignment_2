@@ -9,7 +9,7 @@ import {EnergyConsumptionDTO} from "../dtos/EnergyConsumptionDto";
   providedIn: 'root'
 })
 export class DeviceService {
-  private urlAPI = 'http://localhost:8081/api/device';
+  private urlAPI = 'http://device.localhost/api/device';
   private urlMonitoringAPI = 'http://localhost:8082/api/mcm/device';
 
   constructor(private http: HttpClient,

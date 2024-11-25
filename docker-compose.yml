@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 networks:
   custom_network:
@@ -6,41 +6,57 @@ networks:
     ipam:
       config:
         - subnet: 172.16.0.0/24
-        
+
 services:
+  traefik:
+    image: traefik:v3.2
+    container_name: traefik
+    ports:
+      - "80:80"      # HTTP pentru acces la servicii
+      - "8080:8080"  # Dashboard Traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik_logs:/var/log/traefik
+    networks:
+      custom_network:
+    command:
+      - --api.insecure=true                       # Dashboard fără autentificare
+      - --providers.docker                       # Monitorizare containere Docker
+      - --accesslog=true                         # Log-uri acces
+      - --accesslog.filepath=/var/log/traefik/access.log
+      - --log.level=DEBUG                        # Nivel log pentru depanare
+      - --entrypoints.web.address=:80            # Ascultă pe portul 80
+
   postgres-user:
     image: postgres:16-alpine3.18
     container_name: postgres-user
     networks:
       custom_network:
-        ipv4_address: 172.16.0.2
+        ipv4_address: 172.16.0.8
     environment:
       POSTGRES_DB: user_ms
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: cata1609
-    expose:
-      - 5432
-      
+
   user-management-app:
     build: ./UserMicroService
     image: users:latest
     container_name: users
     networks:
       custom_network:
-        ipv4_address: 172.16.0.3
+        ipv4_address: 172.16.0.9
     environment:
-      DB_IP: 172.16.0.2
+      DB_IP: 172.16.0.8
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: cata1609
       DB_DBNAME: user_ms
-      DEVICE_CONTAINER_NAME: 172.16.0.5
-      DEVICE_CONTAINER_PORT: 8081
-    ports:
-      - "8080:8080"
     depends_on:
       - postgres-user
-
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.user.rule=Host(`user.localhost`) || PathPrefix(`/user`)"
+      - "traefik.http.services.user.loadbalancer.server.port=8084"
 
   postgres-device:
     image: postgres:16-alpine3.18
@@ -52,8 +68,6 @@ services:
       POSTGRES_DB: device_ms
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: cata1609
-    expose:
-      - 5432
 
   device-management-app:
     build: ./DeviceMicroService
@@ -68,15 +82,12 @@ services:
       DB_USER: postgres
       DB_PASSWORD: cata1609
       DB_DBNAME: device_ms
-      USER_CONTAINER_NAME: 172.16.0.3
-      USER_CONTAINER_PORT: 8080
-      MEASURE_CONTAINER_NAME: 172.16.0.7
-      MEASURE_CONTAINER_PORT: 8082
-    ports:
-      - "8081:8081" 
     depends_on:
       - postgres-device
-      
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.device.rule=Host(`device.localhost`) || PathPrefix(`/device`)"
+      - "traefik.http.services.device.loadbalancer.server.port=8081"
 
   postgres-measure:
     image: postgres:16-alpine3.18
@@ -110,21 +121,20 @@ services:
       - "8082:8082" 
     depends_on:
       - postgres-measure
-      
 
   frontend:
     build: ./Frontend_EnergyApp
-    container_name: client
     image: client:latest
-    environment:
-      NG_APP_HOST_USER_API: http://172.16.0.3:8080
-      NG_APP_HOST_DEVICE_API: http://172.16.0.5:8081
-      NG_APP_HOST_MEASURE_API: http://172.16.0.7:8082
+    container_name: client
     ports:
-      - "4200:4200"
-    depends_on:
-      - user-management-app
-      - device-management-app
-      - measure-management-app   
- 
- 
+     - "4200:4200"  # Mapare port container -> port gazdă
+    environment:
+        NG_APP_HOST_USER_API: http://user.localhost
+        NG_APP_HOST_DEVICE_API: http://device.localhost
+        NG_APP_HOST_MEASURE_API: http://measure.localhost
+    labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
+        - "traefik.http.services.frontend.loadbalancer.server.port=4200"
+
+

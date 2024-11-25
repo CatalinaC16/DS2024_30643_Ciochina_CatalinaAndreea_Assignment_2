@@ -5,6 +5,7 @@ import com.example.deviceMS.dtos.userDTOs.UserDTO;
 import com.example.deviceMS.entities.Device;
 import com.example.deviceMS.entities.User;
 import com.example.deviceMS.exceptions.DeviceDoesNotExistException;
+import com.example.deviceMS.producer.DeviceProducer;
 import com.example.deviceMS.repositories.DeviceRepository;
 import com.example.deviceMS.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,8 @@ public class UserService {
 
     private final UserMapper userMapper;
 
+    private final DeviceProducer deviceProducer;
+
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     public UserDTO createUser(UserDTO userDTO) {
@@ -42,6 +45,9 @@ public class UserService {
         devices = devices.stream()
                 .filter(device -> device.getUser().getId() != null && device.getUser().getId().equals(id))
                 .collect(Collectors.toList());
+        for (Device device : devices) {
+            deviceProducer.sendDeviceMessage(device, "delete");
+        }
         this.deviceRepository.deleteAll(devices);
 
         if (userOptional.isEmpty()) {
