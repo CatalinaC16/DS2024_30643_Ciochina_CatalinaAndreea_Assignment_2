@@ -86,8 +86,7 @@ export class MyDevicesComponent implements OnInit {
     this.deviceService.getEnergyConsumption(deviceId, formattedDate).subscribe(
       (data: EnergyConsumptionDTO) => {
         console.log(data)
-        const adjustedLabels = this.adjustLabelsToUTC(data.hours);
-        this.deviceCharts[deviceId] = this.buildChart(adjustedLabels, data.values);
+        this.deviceCharts[deviceId] = this.buildChart(data.hours, data.values);
       },
       (error) => {
         console.error('Failed to fetch energy consumption data', error);
@@ -95,24 +94,44 @@ export class MyDevicesComponent implements OnInit {
     );
   }
 
-  adjustLabelsToUTC(labels: string[]): string[] {
-    return labels.map(label => {
+  adjustHoursAndValues(labels: string[], values: number[]): { adjustedLabels: string[], adjustedValues: number[] } {
+    const adjustedLabels: string[] = [];
+    const adjustedValues: number[] = [];
+
+    labels.forEach((label, index) => {
       let hour = parseInt(label.split(':')[0], 10);
-      hour = (hour - 2 + 24) % 24;
-      return `${hour.toString().padStart(2, '0')}:00`;
+      if (hour >= 24) {
+        hour = hour - 24;
+      }
+      adjustedLabels[hour] = `${hour.toString().padStart(2, '0')}:00`;
+      adjustedValues[hour] = values[index];
     });
+
+    for (let i = 0; i < 24; i++) {
+      if (!adjustedLabels[i]) {
+        adjustedLabels[i] = `${i.toString().padStart(2, '0')}:00`;
+        adjustedValues[i] = 0;
+      }
+    }
+
+    return { adjustedLabels, adjustedValues };
   }
 
+
   buildChart(labels: string[], data: number[]): { type: ChartType, data: ChartData<ChartType>, options: ChartOptions } {
-    console.log('Labels:', labels);
-    console.log('Data:', data);
+
+    const { adjustedLabels, adjustedValues } = this.adjustHoursAndValues(labels, data);
+
+    console.log('Adjusted Labels:', adjustedLabels);
+    console.log('Adjusted Values:', adjustedValues);
+
     return {
       type: 'line',
       data: {
-        labels: labels,
+        labels: adjustedLabels,
         datasets: [{
           label: 'Energy Consumption (kWh)',
-          data: data,
+          data: adjustedValues,
           borderColor: 'blue',
           backgroundColor: 'rgba(0, 123, 255, 0.5)',
           fill: true,
@@ -122,10 +141,11 @@ export class MyDevicesComponent implements OnInit {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: {title: {display: true, text: 'Hour'}},
-          y: {title: {display: true, text: 'Energy Consumption (kWh)'}}
+          x: { title: { display: true, text: 'Hour' } },
+          y: { title: { display: true, text: 'Energy Consumption (kWh)' } }
         }
       }
     };
   }
+
 }
