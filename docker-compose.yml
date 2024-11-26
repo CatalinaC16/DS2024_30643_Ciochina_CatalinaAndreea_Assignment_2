@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   custom_network:
     driver: bridge
@@ -13,19 +11,21 @@ services:
     container_name: traefik
     ports:
       - "80:80"      # HTTP pentru acces la servicii
-      - "8080:8080"  # Dashboard Traefik
+      - "8080:8080"  # Dashboard-ul Traefik
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./traefik_logs:/var/log/traefik
     networks:
       custom_network:
     command:
-      - --api.insecure=true                       # Dashboard fără autentificare
+      - --api.insecure=true                       # Dashboard fără autentificare (doar pentru dev)
       - --providers.docker                       # Monitorizare containere Docker
-      - --accesslog=true                         # Log-uri acces
+      - --accesslog=true                         # Jurnal acces
       - --accesslog.filepath=/var/log/traefik/access.log
-      - --log.level=DEBUG                        # Nivel log pentru depanare
+      - --log.level=DEBUG                        # Nivel jurnalizare pentru debugging
       - --entrypoints.web.address=:80            # Ascultă pe portul 80
+    labels:
+      - "traefik.enable=true"
 
   postgres-user:
     image: postgres:16-alpine3.18
@@ -41,10 +41,8 @@ services:
   user-management-app:
     build: ./UserMicroService
     image: users:latest
-    container_name: users
     networks:
       custom_network:
-        ipv4_address: 172.16.0.9
     environment:
       DB_IP: 172.16.0.8
       DB_PORT: 5432
@@ -53,9 +51,13 @@ services:
       DB_DBNAME: user_ms
     depends_on:
       - postgres-user
+    deploy:
+      replicas: 2
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.user.rule=Host(`user.localhost`) || PathPrefix(`/user`)"
+      - "traefik.http.middlewares.user-strip.stripprefix.prefixes=/user"
+      - "traefik.http.routers.user.middlewares=user-strip"
       - "traefik.http.services.user.loadbalancer.server.port=8084"
 
   postgres-device:
@@ -72,10 +74,8 @@ services:
   device-management-app:
     build: ./DeviceMicroService
     image: devices:latest
-    container_name: devices
     networks:
       custom_network:
-        ipv4_address: 172.16.0.5
     environment:
       DB_IP: 172.16.0.4
       DB_PORT: 5432  
@@ -84,9 +84,13 @@ services:
       DB_DBNAME: device_ms
     depends_on:
       - postgres-device
+    deploy:
+      replicas: 2
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.device.rule=Host(`device.localhost`) || PathPrefix(`/device`)"
+      - "traefik.http.middlewares.device-strip.stripprefix.prefixes=/device"
+      - "traefik.http.routers.device.middlewares=device-strip"
       - "traefik.http.services.device.loadbalancer.server.port=8081"
 
   postgres-measure:
@@ -94,47 +98,44 @@ services:
     container_name: postgres-measure
     networks:
       custom_network:
-        ipv4_address: 172.16.0.6
     environment:
       POSTGRES_DB: measure_ms
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: cata1609
-    expose:
-      - 5432
 
   measure-management-app:
     build: ./MCMicroService
     image: measure:latest
-    container_name: measure
     networks:
       custom_network:
-        ipv4_address: 172.16.0.7
     environment:
-      DB_IP: 172.16.0.6
+      DB_IP: postgres-measure
       DB_PORT: 5432  
       DB_USER: postgres
       DB_PASSWORD: cata1609
       DB_DBNAME: measure_ms
-      DEVICE_CONTAINER_NAME: 172.16.0.5
-      DEVICE_CONTAINER_PORT: 8081
-    ports:
-      - "8082:8082" 
     depends_on:
       - postgres-measure
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.measure.rule=Host(`measure.localhost`) || PathPrefix(`/measure`)"
+      - "traefik.http.middlewares.measure-strip.stripprefix.prefixes=/measure"
+      - "traefik.http.routers.measure.middlewares=measure-strip"
+      - "traefik.http.services.measure.loadbalancer.server.port=8082"
 
   frontend:
     build: ./Frontend_EnergyApp
     image: client:latest
     container_name: client
-    ports:
-     - "4200:4200"  # Mapare port container -> port gazdă
+    networks:
+      custom_network:
     environment:
         NG_APP_HOST_USER_API: http://user.localhost
         NG_APP_HOST_DEVICE_API: http://device.localhost
         NG_APP_HOST_MEASURE_API: http://measure.localhost
     labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
+        - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`) || PathPrefix(`/frontend`)"
+        - "traefik.http.middlewares.frontend-strip.stripprefix.prefixes=/frontend"
+        - "traefik.http.routers.frontend.middlewares=frontend-strip"
         - "traefik.http.services.frontend.loadbalancer.server.port=4200"
-
-

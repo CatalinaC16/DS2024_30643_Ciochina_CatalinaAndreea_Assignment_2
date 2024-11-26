@@ -1,31 +1,39 @@
-version: '3'
+version: '3.8'
 
 services:
-  postgres:
-    container_name: postgres-device
+  postgres-device:
     image: postgres:16-alpine3.18
-    ports:
-      - "5433:5432" # expunere locală a portului Postgres
+    container_name: postgres-device
+    networks:
+      - custom_network
     environment:
-      - POSTGRES_DB=device_ms
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=cata1609
-    volumes:
-      - device:/var/lib/postgresql/data
+      POSTGRES_DB: device_ms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cata1609
 
-  app:
-    container_name: devices
-    build: .
-    ports:
-      - "8081:8081" # expunere locală a portului aplicației
+  device-management-app:
+    build: ./DeviceMicroService
+    image: devices:latest
+    container_name: device-management-app
+    networks:
+      - custom_network
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/device_ms
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=cata1609
+      DB_IP: postgres-device
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: cata1609
+      DB_DBNAME: device_ms
     depends_on:
-      - postgres
-    links:
-      - postgres
+      - postgres-device
+    deploy:
+      replicas: 2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.device.rule=Host(`device.localhost`) || PathPrefix(`/device`)"
+      - "traefik.http.middlewares.device-strip.stripprefix.prefixes=/device"
+      - "traefik.http.routers.device.middlewares=device-strip"
+      - "traefik.http.services.device.loadbalancer.server.port=8081"
 
-volumes:
-  device:
+networks:
+  custom_network:
+    external: true

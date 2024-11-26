@@ -7,7 +7,7 @@ import { SocketMessageDto } from '../dtos/SocketMessageDto';
   providedIn: 'root',
 })
 export class WebSocketService {
-  private wsUrl = 'ws://localhost:8082/ws';
+  private wsUrl = 'ws://measure.localhost/ws';
   private socket$: WebSocketSubject<string> | null = null;
 
   public alertsSubject = new BehaviorSubject<SocketMessageDto[]>([]);

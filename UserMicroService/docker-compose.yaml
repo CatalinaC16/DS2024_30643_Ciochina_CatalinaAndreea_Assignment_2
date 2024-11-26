@@ -1,31 +1,39 @@
-version: '3'
+version: '3.8'
 
 services:
-  postgres:
-    container_name: postgres-user
+  postgres-user:
     image: postgres:16-alpine3.18
-    ports:
-      - "5433:5432"
+    container_name: postgres-user
+    networks:
+      - custom_network
     environment:
-      - POSTGRES_DB=user_ms
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=cata1609
-    volumes:
-      - user:/var/lib/postgresql/data
+      POSTGRES_DB: user_ms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cata1609
 
-  app:
-    container_name: users
-    build: .
-    ports:
-      - "8084:8084" # expunere locală a portului aplicației
+  user-management-app:
+    build: ./UserMicroService
+    image: users:latest
+    container_name: user-management-app
+    networks:
+      - custom_network
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/user_ms
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=cata1609
+      DB_IP: postgres-user
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: cata1609
+      DB_DBNAME: user_ms
     depends_on:
-      - postgres
-    links:
-      - postgres
+      - postgres-user
+    deploy:
+      replicas: 2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.user.rule=Host(`user.localhost`) || PathPrefix(`/user`)"
+      - "traefik.http.middlewares.user-strip.stripprefix.prefixes=/user"
+      - "traefik.http.routers.user.middlewares=user-strip"
+      - "traefik.http.services.user.loadbalancer.server.port=8084"
 
-volumes:
-  user:
+networks:
+  custom_network:
+    external: true

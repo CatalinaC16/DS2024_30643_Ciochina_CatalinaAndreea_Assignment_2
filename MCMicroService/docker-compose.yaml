@@ -1,28 +1,39 @@
-version: '3'
-services:
-  postgres:
-    container_name: postgres-measure
-    image: postgres:16-alpine3.18
-    ports:
-      - "5434:5432"
-    environment:
-      - POSTGRES_DB=measure_ms
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=cata1609
-    volumes:
-      - measure:/var/lib/postgresql/data
-  app:
-    container_name: measure
-    image: measure
-    build: .
-    ports:
-      - "8082:8082"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/measure_ms
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=cata1609
-    links:
-      - postgres
+version: '3.8'
 
-volumes:
-  measure:
+services:
+  postgres-measure:
+    image: postgres:16-alpine3.18
+    container_name: postgres-measure
+    networks:
+      - custom_network
+    environment:
+      POSTGRES_DB: measure_ms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cata1609
+
+  measure-management-app:
+    build: ./MCMicroService
+    image: measure:latest
+    container_name: measure-management-app
+    networks:
+      - custom_network
+    environment:
+      DB_IP: postgres-measure
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: cata1609
+      DB_DBNAME: measure_ms
+    depends_on:
+      - postgres-measure
+    deploy:
+      replicas: 2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.measure.rule=Host(`measure.localhost`) || PathPrefix(`/measure`)"
+      - "traefik.http.middlewares.measure-strip.stripprefix.prefixes=/measure"
+      - "traefik.http.routers.measure.middlewares=measure-strip"
+      - "traefik.http.services.measure.loadbalancer.server.port=8082"
+
+networks:
+  custom_network:
+    external: true

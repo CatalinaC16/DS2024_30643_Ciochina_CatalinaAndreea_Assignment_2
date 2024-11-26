@@ -1,6 +1,6 @@
 # Energy Monitoring Application
 
-This repository contains an energy monitoring application consisting of two microservices: `usersms` and `devicesms`
+This repository contains an energy monitoring application consisting of three microservices: `usersms` ,`devicesms`,`measurems`
 and a frontend application in Angular (`frontend_energyapp`). Each microservice has its own PostgreSQL database.
 
 ## Prerequisites
@@ -13,6 +13,7 @@ and a frontend application in Angular (`frontend_energyapp`). Each microservice 
 
 - **UserMicroService**: Contains code for `usersms` microservice.
 - **DeviceMicroService**: Contains code for `devicesms` microservice.
+- **MCMicroService**: Contains code for `measurems` microservice.
 - **Frontend_EnergyApp**: Angular-based frontend application.
 - **docker-compose.yml**: Docker Compose configuration for deploying the entire application stack.
 
@@ -38,13 +39,26 @@ Set up PostgreSQL databases for each microservice.
 Start all containers.
 
 ### Step 2: Access the Application
-Frontend: The frontend will be accessible at http://localhost:4200.
-Users Microservice: Accessible at http://172.16.0.3:8080.
-Devices Microservice: Accessible at http://172.16.0.5:8081.
+Frontend: The frontend will be accessible at http://frontend.localhost
+Users Microservice: Accessible at http://user.localhost
+Devices Microservice: Accessible at http://device.localhost
+Monitoring Microservice: Accessible at http://measure.localhost
 
-### Step 3: Stopping the Application
+### Step 3: Starting the Simulator application
+The simulator is responsible with reading the values from a .csv file and transmiting them over the queue
+to the monitoring microservice.
+
+The device.id for the simulator can be set in the config.properties file (UUID type)
+You can start the app by running one of the .jar files after setting the device id in the config file.
+The runnig of the .jar file can be done with:
+ 
+	java -jar SMDSimulator-0.0.1-SNAPSHOT_86.jar
+
+### Step 4: Stopping the Application
 To stop and remove containers, use in a cmd from root directory:
 
 #docker-compose down
 
 This command stops all running containers and removes them along with any networks created by Docker Compose.
+
+And for the Simulator a Ctrl+C is enough to stop the Spring application.
